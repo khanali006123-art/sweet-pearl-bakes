@@ -1,31 +1,46 @@
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+
   typescript: {
     ignoreBuildErrors: true,
   },
+
   eslint: {
     ignoreDuringBuilds: true,
   },
+
   images: {
-    domains: ['images.unsplash.com', 'res.cloudinary.com', 'localhost'],
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
       },
     ],
   },
+
   async rewrites() {
-    const apiTarget = process.env.API_URL || 'http://localhost:5000';
+    const apiTarget = (
+      process.env.API_URL || 'http://localhost:5000'
+    ).replace(/\/$/, '');
+
     return [
       {
         source: '/api/v1/:path*',
-        destination: ${apiTarget}/api/v1/:path*,
+        destination: `${apiTarget}/api/v1/:path*`,
       },
       {
         source: '/uploads/:path*',
-        destination: ${apiTarget}/uploads/:path*,
+        destination: `${apiTarget}/uploads/:path*`,
       },
     ];
   },
