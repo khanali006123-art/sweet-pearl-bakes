@@ -1,0 +1,36 @@
+});
+export const ProductImageSchema = z.object({
+  url: z.string().min(1, 'Image URL is required'),
+  alt: z.string().default('Sweet Pearl Bakes creation'),
+});
+export const ProductCreateUpdateSchema = z.object({
+  name: z.string().min(2, 'Product name required').max(120),
+  slug: z.string().min(2, 'Slug required').max(120),
+  category: z.enum(['Cakes', 'Cupcakes', 'Brownies', 'Bento Cakes', 'Custom Cakes']),
+  description: z.string().min(5, 'Description required').max(1500),
+  images: z.array(ProductImageSchema).min(1, 'At least one image is required'),
+  priceOptions: z.array(ProductPriceOptionSchema).min(1, 'At least one price option is required'),
+  priceMode: z.enum(['fixed', 'from', 'quote']).default('from'),
+  flavors: z.array(z.string()).default([]),
+  minNoticeDays: z.number().int().min(1).default(1),
+  isActive: z.boolean().default(true),
+  sortOrder: z.number().int().default(0),
+});
+export const SettingsUpdateSchema = z.object({
+  businessHours: z.string().optional(),
+  deliveryNote: z.string().optional(),
+  announcementText: z.string().optional(),
+  whatsappNumber: z.string().optional(),
+  minNoticeDaysSimple: z.number().int().min(1).optional(),
+  minNoticeDaysCustom: z.number().int().min(1).optional(),
+  paymentAccounts: z
+    .array(
+      z.object({
+        method: z.enum(['Easypaisa', 'JazzCash']),
+        number: z.string().min(8),
+        title: z.string().min(2),
+        instructions: z.string().optional(),
+      })
+    )
+    .optional(),
+});

@@ -1,0 +1,57 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;0,900;1,400;1,600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-playfair: 'Playfair Display', Georgia, serif;
+  --font-inter: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+body {
+  background-color: #FFF8ED;
+  color: #33241E;
+  font-family: var(--font-inter);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Accessible focus rings */
+*:focus-visible {
+  outline: 2px solid #C59A5B;
+  outline-offset: 2px;
+}
+
+/* Custom smooth scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #FFF8ED;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #DFCBB6;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #C59A5B;
+}
+
+/* Fluid typography utilities */
+.font-heading {
+  font-family: var(--font-playfair);
+}
+
+/* Image sharpness and contrast rendering */
+img {
+  image-rendering: -webkit-optimize-contrast; /* Image ki sharpness aur contrast badhane ke liye */
+  image-rendering: crisp-edges;
+  object-fit: cover;
+  max-width: 100%;
+  height: auto;
+}
