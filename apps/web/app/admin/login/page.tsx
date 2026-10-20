@@ -7,8 +7,8 @@ import { SITE_NAME } from '@/lib/constants';
 
 export default function AdminLoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@sweetpearlbakes.com');
-  const [password, setPassword] = useState('sweetpearl123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -24,16 +24,21 @@ export default function AdminLoginPage() {
         body: JSON.stringify({ email, password }),
       });
 
-      const json = await res.json();
-      if (!res.ok) {
-        throw new Error(json.message || 'Login failed. Invalid credentials.');
+      const contentType = res.headers.get('content-type') || '';
+      let json: any = {};
+      if (contentType.includes('application/json')) {
+        json = await res.json();
       }
 
-      // Store in localStorage as backup session indicator
-      localStorage.setItem('spb_admin_session', JSON.stringify(json.data));
-      router.push('/admin');
+      if (!res.ok) {
+        throw new Error(json.message || 'Invalid credentials. Access denied.');
+      }
+
+      // Store in localStorage as client session indicator
+      localStorage.setItem('spb_admin_session', JSON.stringify(json.data || { email, role: 'admin' }));
+      router.replace('/admin');
     } catch (err: any) {
-      setErrorMsg(err.message || 'Login failed. Please check credentials.');
+      setErrorMsg(err.message || 'Login failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
@@ -46,7 +51,7 @@ export default function AdminLoginPage() {
           <Cake className="w-6 h-6" />
         </div>
         <h1 className="font-serif text-3xl font-bold text-[#3A2117]">Staff Portal Login</h1>
-        <p className="text-xs text-[#75645A]">Secure management dashboard for Sweet Pearl Bakes</p>
+        <p className="text-xs text-[#75645A]">Restricted administrator access for Sweet Pearl Bakes</p>
       </div>
 
       <div className="bg-white p-8 rounded-20px shadow-cocoa-lg border border-[#DFCBB6] space-y-6">
@@ -65,6 +70,7 @@ export default function AdminLoginPage() {
               <input
                 type="email"
                 required
+                placeholder="admin@sweetpearlbakes.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#FFF8ED] text-xs text-[#33241E] border border-[#DFCBB6] focus:outline-none focus:border-[#C59A5B]"
@@ -79,17 +85,12 @@ export default function AdminLoginPage() {
               <input
                 type="password"
                 required
+                placeholder="••••••••"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[#FFF8ED] text-xs text-[#33241E] border border-[#DFCBB6] focus:outline-none focus:border-[#C59A5B]"
               />
             </div>
-          </div>
-
-          <div className="p-3 bg-[#FFF8ED] rounded-xl border border-[#DFCBB6] text-[11px] text-[#75645A] space-y-1">
-            <p><strong>Demo Owner Credentials:</strong></p>
-            <p>Email: <code className="text-[#3A2117]">admin@sweetpearlbakes.com</code></p>
-            <p>Password: <code className="text-[#3A2117]">sweetpearl123</code></p>
           </div>
 
           <button

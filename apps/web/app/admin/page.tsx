@@ -54,10 +54,33 @@ export default function AdminDashboardPage() {
   const [orderSearch, setOrderSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [actionSuccess, setActionSuccess] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   useEffect(() => {
-    loadAllData();
-  }, []);
+    const checkAuth = async () => {
+      const localSession = typeof window !== 'undefined' ? localStorage.getItem('spb_admin_session') : null;
+      if (!localSession) {
+        router.replace('/admin/login');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/v1/auth/verify');
+        if (!res.ok) {
+          localStorage.removeItem('spb_admin_session');
+          router.replace('/admin/login');
+          return;
+        }
+      } catch (err) {
+        // Offline or serverless fallback
+      }
+
+      setIsAuthenticated(true);
+      loadAllData();
+    };
+
+    checkAuth();
+  }, [router]);
 
   const loadAllData = async () => {
     try {
@@ -102,6 +125,22 @@ export default function AdminDashboardPage() {
       if (setRes.ok) {
         const json = await setRes.json();
         setSettingsData(json.data);
+      }
+
+      // Merge client orders for standalone visibility
+      if (typeof window !== 'undefined') {
+        try {
+          const localOrders = JSON.parse(localStorage.getItem('spb_orders') || '[]');
+          if (localOrders.length > 0) {
+            setOrders((prev) => {
+              const ids = new Set(prev.map((o) => o.orderNumber));
+              const newOrders = localOrders.filter((o: any) => !ids.has(o.orderNumber));
+              return [...newOrders, ...prev];
+            });
+          }
+        } catch (e) {
+          // ignore
+        }
       }
     } catch (err) {
       console.warn('Using local store fallback in admin', err);
@@ -150,9 +189,13 @@ export default function AdminDashboardPage() {
   };
 
   const handleLogout = async () => {
-    await fetch('/api/v1/auth/logout', { method: 'POST' });
+    try {
+      await fetch('/api/v1/auth/logout', { method: 'POST' });
+    } catch (e) {
+      // ignore
+    }
     localStorage.removeItem('spb_admin_session');
-    router.push('/admin/login');
+    router.replace('/admin/login');
   };
 
   const filteredOrders = orders.filter((o) => {
@@ -164,6 +207,19 @@ export default function AdminDashboardPage() {
       o.customer.phone.includes(orderSearch);
     return matchStatus && matchQuery;
   });
+
+  if (isAuthenticated === null) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+        <div className="w-10 h-10 border-2 border-[#C59A5B] border-t-transparent rounded-full animate-spin" />
+        <p className="text-xs font-semibold text-[#75645A]">Verifying administrator credentials...</p>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
