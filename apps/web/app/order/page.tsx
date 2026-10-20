@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import confetti from 'canvas-confetti';
@@ -21,7 +21,7 @@ import {
 import { submitOrder } from '@/lib/api';
 import { DEFAULT_PRODUCTS, EASYPAISA_NUMBER, JAZZCASH_NUMBER, WHATSAPP_NUMBER } from '@/lib/constants';
 
-export default function OrderPage() {
+function OrderContent() {
   const searchParams = useSearchParams();
 
   const [products, setProducts] = useState(DEFAULT_PRODUCTS);
@@ -490,5 +490,18 @@ export default function OrderPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function OrderPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
+        <div className="w-8 h-8 border-2 border-[#C59A5B] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-xs text-[#75645A]">Loading order checkout...</p>
+      </div>
+    }>
+      <OrderContent />
+    </Suspense>
   );
 }

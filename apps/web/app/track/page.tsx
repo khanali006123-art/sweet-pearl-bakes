@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Search, Clock, CheckCircle2, Package, Truck, AlertCircle, ShoppingBag, ShieldCheck } from 'lucide-react';
 import { trackOrderApi } from '@/lib/api';
 
-export default function TrackOrderPage() {
+function TrackOrderContent() {
   const searchParams = useSearchParams();
   const [orderNumber, setOrderNumber] = useState(searchParams?.get('order') || '');
   const [phone, setPhone] = useState(searchParams?.get('phone') || '');
@@ -191,5 +191,18 @@ export default function TrackOrderPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TrackOrderPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-4xl mx-auto px-4 py-16 text-center">
+        <div className="w-8 h-8 border-2 border-[#C59A5B] border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-xs text-[#75645A]">Loading order tracking...</p>
+      </div>
+    }>
+      <TrackOrderContent />
+    </Suspense>
   );
 }
