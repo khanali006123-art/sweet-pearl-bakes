@@ -120,7 +120,11 @@ function OrderContent() {
       };
 
       const res = await submitOrder(orderPayload);
-      setCompletedOrder(res.data);
+      if (res && res.data) {
+        setCompletedOrder(res.data);
+      } else {
+        throw new Error('Unable to complete order. Please contact us on WhatsApp.');
+      }
 
       // Trigger celebratory confetti
       confetti({

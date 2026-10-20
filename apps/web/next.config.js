@@ -29,6 +29,10 @@ const nextConfig = {
   },
 
   async rewrites() {
+    if (!process.env.API_URL && process.env.NODE_ENV === 'production') {
+      return [];
+    }
+
     const apiTarget = (
       process.env.API_URL || 'http://localhost:5000'
     ).replace(/\/$/, '');
