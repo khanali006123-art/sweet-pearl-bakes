@@ -30,15 +30,15 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
       payment: {
         method: validated.paymentMethod,
         proofUrl: validated.paymentProofUrl,
-        status: validated.paymentProofUrl ? 'Pending' : 'Pending'
+        status: 'Pending'
       },
-      status: 'Received',
+      status: 'Pending Payment Verification',
       statusHistory: [
         {
-          status: 'Received',
+          status: 'Pending Payment Verification',
           at: new Date(),
           by: 'Customer (Online Form)',
-          note: `Order placed via ${validated.source}`
+          note: `Order placed via ${validated.source} with advance payment receipt uploaded. Pending verification.`
         }
       ],
       source: validated.source,
@@ -53,13 +53,13 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
     const settings = localStore.getData().settings;
     const itemsSummary = newOrder.items.map(i => `${i.quantity}x ${i.productName} (${i.sizeLabel}, ${i.flavor})`).join(', ');
     const waText = encodeURIComponent(
-      `Assalam-o-Alaikum Sweet Pearl Bakes! I just placed Order #${newOrder.orderNumber}.\n\nItems: ${itemsSummary}\nDelivery Date: ${newOrder.deliveryDate}\nName: ${newOrder.customer.name}\nTotal: Rs. ${newOrder.totalPKR}\nPayment via: ${newOrder.payment.method}`
+      `Assalam-o-Alaikum Sweet Pearl Bakes! I just placed Order #${newOrder.orderNumber}.\n\nItems: ${itemsSummary}\nDelivery Date: ${newOrder.deliveryDate}\nName: ${newOrder.customer.name}\nTotal: Rs. ${newOrder.totalPKR}\nPayment via: ${newOrder.payment.method} (Advance receipt attached)\nStatus: Pending Payment Verification`
     );
     const whatsappUrl = `https://wa.me/${settings.whatsappNumber}?text=${waText}`;
 
     res.status(201).json({
       success: true,
-      message: 'Order created successfully',
+      message: 'Order created successfully. Advance payment receipt submitted for verification.',
       data: {
         orderNumber: newOrder.orderNumber,
         totalPKR: newOrder.totalPKR,
@@ -166,6 +166,7 @@ export async function adminUpdateOrderStatus(req: AuthRequest, res: Response, ne
     const { status, note } = req.body;
 
     const validStatuses: OrderStatus[] = [
+      'Pending Payment Verification',
       'Received',
       'Payment Verified',
       'Preparing',
@@ -225,7 +226,7 @@ export async function adminUpdateOrderPayment(req: AuthRequest, res: Response, n
     if (referenceNumber) order.payment.referenceNumber = referenceNumber;
     if (status === 'Verified') {
       order.payment.verifiedAt = new Date();
-      if (order.status === 'Received') {
+      if (order.status === 'Pending Payment Verification' || order.status === 'Received') {
         order.status = 'Payment Verified';
         order.statusHistory.push({
           status: 'Payment Verified',
@@ -234,6 +235,14 @@ export async function adminUpdateOrderPayment(req: AuthRequest, res: Response, n
           note: 'Payment verified via manual screenshot audit'
         });
       }
+    } else if (status === 'Rejected') {
+      order.status = 'Cancelled';
+      order.statusHistory.push({
+        status: 'Cancelled',
+        at: new Date(),
+        by: req.user?.name || 'Admin',
+        note: 'Payment receipt rejected by Admin'
+      });
     }
     order.updatedAt = new Date();
 

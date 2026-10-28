@@ -16,7 +16,8 @@ import {
   Clock,
   Sparkles,
   CreditCard,
-  Check
+  Check,
+  X
 } from 'lucide-react';
 import { submitOrder } from '@/lib/api';
 import { DEFAULT_PRODUCTS, EASYPAISA_NUMBER, JAZZCASH_NUMBER, WHATSAPP_NUMBER } from '@/lib/constants';
@@ -41,7 +42,7 @@ function OrderContent() {
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [deliveryDate, setDeliveryDate] = useState(searchParams?.get('date') || '');
   const [instructions, setInstructions] = useState(searchParams?.get('instructions') || '');
-  const [paymentMethod, setPaymentMethod] = useState<'Easypaisa' | 'JazzCash'>('Easypaisa');
+  const [paymentMethod, setPaymentMethod] = useState<'Easypaisa' | 'JazzCash' | ''>('');
   const [proofDataUrl, setProofDataUrl] = useState('');
   const [designDataUrl, setDesignDataUrl] = useState('');
 
@@ -49,6 +50,7 @@ function OrderContent() {
   const [errorMsg, setErrorMsg] = useState('');
   const [completedOrder, setCompletedOrder] = useState<any>(null);
   const [copied, setCopied] = useState(false);
+  const [copiedAccount, setCopiedAccount] = useState(false);
 
   // Set minimum date to tomorrow
   const minDateStr = new Date(Date.now() + 86400000).toISOString().split('T')[0];
@@ -73,9 +75,16 @@ function OrderContent() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setProofDataUrl(reader.result as string);
+        setErrorMsg('');
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleCopyAccount = (number: string) => {
+    navigator.clipboard.writeText(number);
+    setCopiedAccount(true);
+    setTimeout(() => setCopiedAccount(false), 2000);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,6 +98,16 @@ function OrderContent() {
 
     if (!deliveryAddress || deliveryAddress.length < 5) {
       setErrorMsg('Please provide a complete delivery address within Dera Ismail Khan.');
+      return;
+    }
+
+    if (!paymentMethod || (paymentMethod !== 'Easypaisa' && paymentMethod !== 'JazzCash')) {
+      setErrorMsg('Please select a payment method and pay the required advance payment before confirming your order.');
+      return;
+    }
+
+    if (!proofDataUrl || !proofDataUrl.trim()) {
+      setErrorMsg('Please upload your advance payment receipt before confirming your order.');
       return;
     }
 
@@ -115,7 +134,7 @@ function OrderContent() {
         instructions: instructions || undefined,
         designImageUrl: designDataUrl || undefined,
         paymentMethod,
-        paymentProofUrl: proofDataUrl || undefined,
+        paymentProofUrl: proofDataUrl,
         source: 'web',
       };
 
@@ -153,19 +172,19 @@ function OrderContent() {
       {completedOrder ? (
         /* Order Confirmation View */
         <div className="bg-white rounded-20px p-8 sm:p-12 shadow-cocoa-lg border-2 border-[#C59A5B] text-center space-y-8 animate-in zoom-in-95 duration-300">
-          <div className="w-16 h-16 bg-emerald-100 text-[#148447] rounded-full flex items-center justify-center mx-auto shadow-sm">
-            <CheckCircle2 className="w-10 h-10" />
+          <div className="w-16 h-16 bg-amber-50 text-amber-700 rounded-full flex items-center justify-center mx-auto shadow-sm border border-amber-200">
+            <Clock className="w-9 h-9" />
           </div>
 
           <div className="space-y-2">
-            <span className="text-xs font-bold uppercase tracking-widest text-[#8A6428]">
-              Order Confirmed & Scheduled
+            <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
+              Order Placed — Pending Payment Verification
             </span>
             <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#3A2117]">
-              Shukriya! Your Order is Placed.
+              Shukriya! Your Order is Received.
             </h1>
             <p className="text-sm text-[#75645A] max-w-lg mx-auto">
-              We have received your order details for delivery in Dera Ismail Khan. Our team will verify the payment and begin prepping your fresh cake!
+              We have received your cake details and advance payment receipt. Our bakery team will verify the payment screenshot shortly before baking starts.
             </p>
           </div>
 
@@ -187,9 +206,17 @@ function OrderContent() {
             </div>
             {copied && <p className="text-[11px] text-[#148447] font-semibold">Copied to clipboard!</p>}
 
-            <div className="pt-3 border-t border-[#DFCBB6]/60 flex justify-between text-xs text-[#33241E]">
-              <span>Delivery Date: <strong>{completedOrder.deliveryDate}</strong></span>
-              <span>Total: <strong>Rs. {completedOrder.totalPKR?.toLocaleString()}</strong></span>
+            <div className="pt-3 border-t border-[#DFCBB6]/60 space-y-1.5 text-xs text-[#33241E]">
+              <div className="flex justify-between">
+                <span>Delivery Date: <strong>{completedOrder.deliveryDate}</strong></span>
+                <span>Total: <strong>Rs. {completedOrder.totalPKR?.toLocaleString()}</strong></span>
+              </div>
+              <div className="flex justify-between items-center pt-1 text-[11px]">
+                <span className="text-[#75645A]">Payment Status:</span>
+                <span className="font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                  Pending Verification
+                </span>
+              </div>
             </div>
           </div>
 
@@ -226,14 +253,14 @@ function OrderContent() {
               Place Your Cake Order
             </h1>
             <p className="text-xs sm:text-sm text-[#75645A]">
-              Freshly baked with love in Dera Ismail Khan. Please complete the form below with 100% advance payment to lock your date.
+              Freshly baked with love in Dera Ismail Khan. Advance payment and payment receipt are mandatory to lock your date and start preparation.
             </p>
           </div>
 
           {errorMsg && (
-            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{errorMsg}</span>
+            <div className="p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 text-xs flex items-center gap-2 animate-shake">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <span className="font-semibold">{errorMsg}</span>
             </div>
           )}
 
@@ -394,47 +421,164 @@ function OrderContent() {
 
             {/* Step 3: Payment & Proof */}
             <div className="space-y-4 pt-4 border-t border-[#DFCBB6]/50">
-              <h2 className="font-serif text-lg font-bold text-[#3A2117] flex items-center gap-2">
-                <span className="w-6 h-6 rounded-full bg-[#C59A5B] text-[#3A2117] text-xs flex items-center justify-center font-bold">3</span>
-                <span>100% Advance Payment (Easypaisa / JazzCash)</span>
-              </h2>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <h2 className="font-serif text-lg font-bold text-[#3A2117] flex items-center gap-2">
+                  <span className="w-6 h-6 rounded-full bg-[#C59A5B] text-[#3A2117] text-xs flex items-center justify-center font-bold">3</span>
+                  <span>100% Advance Payment (Required) *</span>
+                </h2>
+                <span className="text-[11px] font-bold text-rose-700 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200 w-fit">
+                  Advance Payment & Receipt Mandatory
+                </span>
+              </div>
 
+              <p className="text-xs text-[#75645A]">
+                To confirm your booking and reserve kitchen time, please choose a payment method below, send 100% advance payment, and upload your payment receipt screenshot.
+              </p>
+
+              {/* Payment Method Selector */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <button
                   type="button"
-                  onClick={() => setPaymentMethod('Easypaisa')}
+                  onClick={() => {
+                    setPaymentMethod('Easypaisa');
+                    setErrorMsg('');
+                  }}
                   className={`p-4 rounded-xl border text-left space-y-1 transition-all ${
                     paymentMethod === 'Easypaisa'
-                      ? 'border-[#148447] bg-emerald-50/50 ring-1 ring-[#148447]'
+                      ? 'border-[#148447] bg-emerald-50/70 ring-2 ring-[#148447] shadow-sm'
                       : 'border-[#DFCBB6] bg-[#FFF8ED]/40 hover:bg-[#FFF8ED]'
                   }`}
                 >
-                  <p className="text-xs font-bold text-[#148447]">Easypaisa</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-[#148447] flex items-center gap-1.5">
+                      <span>Easypaisa</span>
+                      {paymentMethod === 'Easypaisa' && <Check className="w-3.5 h-3.5 text-[#148447]" />}
+                    </p>
+                    <span className="text-[10px] text-[#75645A] uppercase font-bold">100% Advance</span>
+                  </div>
                   <p className="font-serif text-lg font-black text-[#3A2117]">{EASYPAISA_NUMBER}</p>
                   <p className="text-[11px] text-[#75645A]">Title: Sweet Pearl Bakes</p>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setPaymentMethod('JazzCash')}
+                  onClick={() => {
+                    setPaymentMethod('JazzCash');
+                    setErrorMsg('');
+                  }}
                   className={`p-4 rounded-xl border text-left space-y-1 transition-all ${
                     paymentMethod === 'JazzCash'
-                      ? 'border-amber-600 bg-amber-50/50 ring-1 ring-amber-600'
+                      ? 'border-amber-600 bg-amber-50/70 ring-2 ring-amber-600 shadow-sm'
                       : 'border-[#DFCBB6] bg-[#FFF8ED]/40 hover:bg-[#FFF8ED]'
                   }`}
                 >
-                  <p className="text-xs font-bold text-amber-700">JazzCash</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-amber-700 flex items-center gap-1.5">
+                      <span>JazzCash</span>
+                      {paymentMethod === 'JazzCash' && <Check className="w-3.5 h-3.5 text-amber-700" />}
+                    </p>
+                    <span className="text-[10px] text-[#75645A] uppercase font-bold">100% Advance</span>
+                  </div>
                   <p className="font-serif text-lg font-black text-[#3A2117]">{JAZZCASH_NUMBER}</p>
                   <p className="text-[11px] text-[#75645A]">Title: Sweet Pearl Bakes</p>
                 </button>
               </div>
 
+              {/* Instructions and Account Details for Selected Method */}
+              {paymentMethod === 'Easypaisa' && (
+                <div className="bg-emerald-50/80 border border-emerald-200 rounded-xl p-4 space-y-3 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-[#148447] uppercase tracking-wider flex items-center gap-1.5">
+                      <CreditCard className="w-4 h-4" />
+                      <span>Easypaisa Transfer Instructions</span>
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyAccount(EASYPAISA_NUMBER)}
+                      className="text-[11px] font-semibold text-[#148447] bg-white px-2.5 py-1 rounded-lg border border-emerald-300 hover:bg-emerald-100 flex items-center gap-1 transition-colors"
+                    >
+                      {copiedAccount ? <Check className="w-3 h-3 text-[#148447]" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedAccount ? 'Copied!' : 'Copy Number'}</span>
+                    </button>
+                  </div>
+                  <div className="bg-white rounded-lg p-3 border border-emerald-100 space-y-1 text-xs text-[#3A2117]">
+                    <div className="flex justify-between">
+                      <span className="text-[#75645A]">Account Number:</span>
+                      <span className="font-mono font-bold text-[#148447]">{EASYPAISA_NUMBER}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#75645A]">Account Title:</span>
+                      <span className="font-bold">Sweet Pearl Bakes</span>
+                    </div>
+                    <div className="flex justify-between pt-1 border-t border-emerald-50">
+                      <span className="text-[#75645A]">Advance Amount:</span>
+                      <span className="font-bold text-[#148447]">Rs. {grandTotal.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <ol className="text-[11px] text-[#33241E] space-y-1 list-decimal list-inside leading-relaxed pl-1">
+                    <li>Open your Easypaisa app or dial *786#.</li>
+                    <li>Transfer <strong>Rs. {grandTotal.toLocaleString()}</strong> to <strong>{EASYPAISA_NUMBER}</strong> (Title: Sweet Pearl Bakes).</li>
+                    <li>Take a screenshot of the successful transfer receipt and attach it below.</li>
+                  </ol>
+                </div>
+              )}
+
+              {paymentMethod === 'JazzCash' && (
+                <div className="bg-amber-50/80 border border-amber-200 rounded-xl p-4 space-y-3 animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-xs font-bold text-amber-800 uppercase tracking-wider flex items-center gap-1.5">
+                      <CreditCard className="w-4 h-4" />
+                      <span>JazzCash Transfer Instructions</span>
+                    </h3>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyAccount(JAZZCASH_NUMBER)}
+                      className="text-[11px] font-semibold text-amber-800 bg-white px-2.5 py-1 rounded-lg border border-amber-300 hover:bg-amber-100 flex items-center gap-1 transition-colors"
+                    >
+                      {copiedAccount ? <Check className="w-3 h-3 text-amber-800" /> : <Copy className="w-3 h-3" />}
+                      <span>{copiedAccount ? 'Copied!' : 'Copy Number'}</span>
+                    </button>
+                  </div>
+                  <div className="bg-white rounded-lg p-3 border border-amber-100 space-y-1 text-xs text-[#3A2117]">
+                    <div className="flex justify-between">
+                      <span className="text-[#75645A]">Account Number:</span>
+                      <span className="font-mono font-bold text-amber-800">{JAZZCASH_NUMBER}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-[#75645A]">Account Title:</span>
+                      <span className="font-bold">Sweet Pearl Bakes</span>
+                    </div>
+                    <div className="flex justify-between pt-1 border-t border-amber-50">
+                      <span className="text-[#75645A]">Advance Amount:</span>
+                      <span className="font-bold text-amber-800">Rs. {grandTotal.toLocaleString()}</span>
+                    </div>
+                  </div>
+                  <ol className="text-[11px] text-[#33241E] space-y-1 list-decimal list-inside leading-relaxed pl-1">
+                    <li>Open your JazzCash app or dial *786#.</li>
+                    <li>Transfer <strong>Rs. {grandTotal.toLocaleString()}</strong> to <strong>{JAZZCASH_NUMBER}</strong> (Title: Sweet Pearl Bakes).</li>
+                    <li>Take a screenshot of the successful transfer receipt and attach it below.</li>
+                  </ol>
+                </div>
+              )}
+
+              {!paymentMethod && (
+                <div className="p-3.5 rounded-xl bg-[#FFF8ED] border border-dashed border-[#DFCBB6] text-xs text-[#75645A] flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 text-[#8A6428] shrink-0" />
+                  <span>Please select Easypaisa or JazzCash above to reveal advance payment details and transfer instructions.</span>
+                </div>
+              )}
+
               {/* Upload Screenshot */}
               <div className="space-y-2">
-                <label className="text-xs font-bold text-[#3A2117] block">
-                  Upload Payment Screenshot Proof *
+                <label className="text-xs font-bold text-[#3A2117] flex items-center justify-between">
+                  <span>Upload Payment Screenshot Proof * (Mandatory)</span>
+                  <span className="text-[11px] text-[#8A6428] font-normal">PNG, JPG up to 5 MB</span>
                 </label>
-                <div className="border-2 border-dashed border-[#DFCBB6] rounded-20px p-5 text-center bg-[#FFF8ED]/50 relative">
+                <div className={`border-2 border-dashed rounded-20px p-5 text-center relative transition-colors ${
+                  proofDataUrl
+                    ? 'border-emerald-400 bg-emerald-50/40'
+                    : 'border-[#DFCBB6] bg-[#FFF8ED]/50 hover:bg-[#FFF8ED]'
+                }`}>
                   <input
                     type="file"
                     accept="image/png, image/jpeg, image/webp"
@@ -442,15 +586,40 @@ function OrderContent() {
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                   />
                   {proofDataUrl ? (
-                    <div className="space-y-2">
-                      <img src={proofDataUrl} alt="Payment proof preview" className="w-24 h-24 object-cover mx-auto rounded-lg shadow-sm" />
-                      <p className="text-xs text-[#148447] font-semibold">Screenshot attached! Click to replace.</p>
+                    <div className="space-y-3">
+                      <img
+                        src={proofDataUrl}
+                        alt="Payment proof preview"
+                        className="w-28 h-28 object-cover mx-auto rounded-lg shadow-sm border border-emerald-300"
+                      />
+                      <div className="flex items-center justify-center gap-3">
+                        <span className="text-xs text-[#148447] font-semibold flex items-center gap-1">
+                          <Check className="w-3.5 h-3.5" />
+                          Receipt Attached
+                        </span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setProofDataUrl('');
+                          }}
+                          className="text-[11px] text-rose-700 bg-white px-2 py-0.5 rounded border border-rose-200 hover:bg-rose-50 flex items-center gap-1 z-10"
+                        >
+                          <X className="w-3 h-3" />
+                          <span>Remove</span>
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-[#75645A]">Click anywhere in this box to choose a different receipt file.</p>
                     </div>
                   ) : (
                     <div className="space-y-1">
                       <Upload className="w-6 h-6 text-[#C59A5B] mx-auto" />
-                      <p className="text-xs font-semibold text-[#3A2117]">Attach Easypaisa / JazzCash receipt</p>
-                      <p className="text-[10px] text-[#75645A]">PNG, JPG up to 5 MB</p>
+                      <p className="text-xs font-semibold text-[#3A2117]">
+                        Attach Easypaisa / JazzCash receipt *
+                      </p>
+                      <p className="text-[10px] text-[#75645A]">
+                        Required: Screenshot showing transaction ID & Rs. {grandTotal.toLocaleString()} transfer
+                      </p>
                     </div>
                   )}
                 </div>

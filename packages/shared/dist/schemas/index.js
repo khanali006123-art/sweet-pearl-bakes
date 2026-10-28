@@ -21,8 +21,17 @@ exports.OrderItemSchema = zod_1.z.object({
     unitPricePKR: zod_1.z.number().nonnegative('Price cannot be negative').default(0),
 });
 exports.OrderPaymentSchema = zod_1.z.object({
-    method: zod_1.z.enum(['Easypaisa', 'JazzCash']),
-    proofUrl: zod_1.z.string().optional(),
+    method: zod_1.z.enum(['Easypaisa', 'JazzCash'], {
+        errorMap: () => ({
+            message: 'Please select a payment method and pay the required advance payment before confirming your order.',
+        }),
+    }),
+    proofUrl: zod_1.z
+        .string({
+        required_error: 'Please upload your advance payment receipt before confirming your order.',
+        invalid_type_error: 'Please upload your advance payment receipt before confirming your order.',
+    })
+        .min(1, 'Please upload your advance payment receipt before confirming your order.'),
     status: zod_1.z.enum(['Pending', 'Verified', 'Rejected']).default('Pending'),
     referenceNumber: zod_1.z.string().optional(),
 });
@@ -33,8 +42,17 @@ exports.OrderCreateSchema = zod_1.z.object({
     deliveryDate: zod_1.z.string().min(10, 'Delivery date is required'),
     instructions: zod_1.z.string().max(500, 'Instructions max 500 characters').optional(),
     designImageUrl: zod_1.z.string().optional(),
-    paymentMethod: zod_1.z.enum(['Easypaisa', 'JazzCash']),
-    paymentProofUrl: zod_1.z.string().optional(),
+    paymentMethod: zod_1.z.enum(['Easypaisa', 'JazzCash'], {
+        errorMap: () => ({
+            message: 'Please select a payment method and pay the required advance payment before confirming your order.',
+        }),
+    }),
+    paymentProofUrl: zod_1.z
+        .string({
+        required_error: 'Please upload your advance payment receipt before confirming your order.',
+        invalid_type_error: 'Please upload your advance payment receipt before confirming your order.',
+    })
+        .min(1, 'Please upload your advance payment receipt before confirming your order.'),
     source: zod_1.z.enum(['web', 'whatsapp']).default('web'),
 });
 exports.OrderTrackSchema = zod_1.z.object({

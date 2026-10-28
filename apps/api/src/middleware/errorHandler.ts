@@ -5,9 +5,10 @@ export function errorHandler(err: any, req: Request, res: Response, next: NextFu
   console.error('[API Error]:', err);
 
   if (err instanceof ZodError) {
+    const firstMessage = err.errors[0]?.message || 'Validation failed';
     res.status(400).json({
       success: false,
-      message: 'Validation failed',
+      message: firstMessage,
       errors: err.errors.map(e => ({
         path: e.path.join('.'),
         message: e.message

@@ -37,18 +37,18 @@ export declare const OrderItemSchema: z.ZodObject<{
 }>;
 export declare const OrderPaymentSchema: z.ZodObject<{
     method: z.ZodEnum<["Easypaisa", "JazzCash"]>;
-    proofUrl: z.ZodOptional<z.ZodString>;
+    proofUrl: z.ZodString;
     status: z.ZodDefault<z.ZodEnum<["Pending", "Verified", "Rejected"]>>;
     referenceNumber: z.ZodOptional<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
     status: "Pending" | "Verified" | "Rejected";
     method: "Easypaisa" | "JazzCash";
-    proofUrl?: string | undefined;
+    proofUrl: string;
     referenceNumber?: string | undefined;
 }, {
     method: "Easypaisa" | "JazzCash";
+    proofUrl: string;
     status?: "Pending" | "Verified" | "Rejected" | undefined;
-    proofUrl?: string | undefined;
     referenceNumber?: string | undefined;
 }>;
 export declare const OrderCreateSchema: z.ZodObject<{
@@ -92,7 +92,7 @@ export declare const OrderCreateSchema: z.ZodObject<{
     instructions: z.ZodOptional<z.ZodString>;
     designImageUrl: z.ZodOptional<z.ZodString>;
     paymentMethod: z.ZodEnum<["Easypaisa", "JazzCash"]>;
-    paymentProofUrl: z.ZodOptional<z.ZodString>;
+    paymentProofUrl: z.ZodString;
     source: z.ZodDefault<z.ZodEnum<["web", "whatsapp"]>>;
 }, "strip", z.ZodTypeAny, {
     customer: {
@@ -111,10 +111,10 @@ export declare const OrderCreateSchema: z.ZodObject<{
     }[];
     deliveryDate: string;
     paymentMethod: "Easypaisa" | "JazzCash";
+    paymentProofUrl: string;
     source: "web" | "whatsapp";
     instructions?: string | undefined;
     designImageUrl?: string | undefined;
-    paymentProofUrl?: string | undefined;
 }, {
     customer: {
         name: string;
@@ -132,9 +132,9 @@ export declare const OrderCreateSchema: z.ZodObject<{
     }[];
     deliveryDate: string;
     paymentMethod: "Easypaisa" | "JazzCash";
+    paymentProofUrl: string;
     instructions?: string | undefined;
     designImageUrl?: string | undefined;
-    paymentProofUrl?: string | undefined;
     source?: "web" | "whatsapp" | undefined;
 }>;
 export declare const OrderTrackSchema: z.ZodObject<{

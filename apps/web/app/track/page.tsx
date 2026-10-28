@@ -15,7 +15,7 @@ function TrackOrderContent() {
   const [orderData, setOrderData] = useState<any>(null);
 
   const statusSteps = [
-    { key: 'Received', label: 'Order Received' },
+    { key: 'Pending Payment Verification', label: 'Payment Under Review' },
     { key: 'Payment Verified', label: 'Payment Verified' },
     { key: 'Preparing', label: 'Baking & Decorating' },
     { key: 'Ready', label: 'Packed & Ready' },
@@ -54,12 +54,13 @@ function TrackOrderContent() {
   };
 
   const getStepStatus = (stepKey: string, currentStatus: string) => {
-    const order = ['Received', 'Payment Verified', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered'];
-    const currentIndex = order.indexOf(currentStatus);
+    const order = ['Pending Payment Verification', 'Payment Verified', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered'];
+    const normalizedStatus = currentStatus === 'Received' ? 'Pending Payment Verification' : currentStatus;
+    const currentIndex = order.indexOf(normalizedStatus);
     const stepIndex = order.indexOf(stepKey);
 
     if (currentStatus === 'Cancelled') return 'cancelled';
-    if (stepIndex <= currentIndex) return 'completed';
+    if (currentIndex !== -1 && stepIndex <= currentIndex) return 'completed';
     return 'upcoming';
   };
 
@@ -137,10 +138,19 @@ function TrackOrderContent() {
             </div>
 
             <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#FFF8ED] border border-[#C59A5B] text-xs font-bold text-[#3A2117]">
-              <span className="w-2 h-2 rounded-full bg-[#148447] animate-pulse" />
+              <span className={`w-2 h-2 rounded-full ${orderData.paymentStatus === 'Verified' ? 'bg-[#148447]' : 'bg-amber-500'} animate-pulse`} />
               <span>Status: {orderData.status}</span>
             </div>
           </div>
+
+          {orderData.paymentStatus === 'Pending' && (
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-amber-700 shrink-0" />
+              <span>
+                <strong>Payment Under Review:</strong> Your advance payment receipt is awaiting manual audit by the bakery owner. Once verified, order status advances to "Payment Verified".
+              </span>
+            </div>
+          )}
 
           {/* Timeline */}
           <div className="space-y-4">

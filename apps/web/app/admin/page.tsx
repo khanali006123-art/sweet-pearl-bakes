@@ -317,7 +317,7 @@ export default function AdminDashboardPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             {/* Status Filter Pills */}
             <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
-              {['All', 'Received', 'Payment Verified', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered'].map(
+              {['All', 'Pending Payment Verification', 'Received', 'Payment Verified', 'Preparing', 'Ready', 'Out for Delivery', 'Delivered'].map(
                 (st) => (
                   <button
                     key={st}
@@ -369,6 +369,19 @@ export default function AdminDashboardPage() {
                       >
                         Payment: {order.payment.method} ({order.payment.status})
                       </span>
+                      <span
+                        className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
+                          order.status === 'Payment Verified'
+                            ? 'bg-emerald-100 text-[#148447]'
+                            : order.status === 'Pending Payment Verification'
+                            ? 'bg-amber-100 text-amber-900 border border-amber-300'
+                            : order.status === 'Cancelled'
+                            ? 'bg-rose-100 text-rose-800'
+                            : 'bg-[#FFF8ED] text-[#3A2117] border border-[#DFCBB6]'
+                        }`}
+                      >
+                        {order.status}
+                      </span>
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -388,6 +401,7 @@ export default function AdminDashboardPage() {
                         onChange={(e) => handleUpdateStatus(order._id || order.orderNumber, e.target.value)}
                         className="bg-white text-xs font-bold text-[#3A2117] px-3 py-1.5 rounded-full border border-[#DFCBB6] focus:outline-none focus:border-[#C59A5B]"
                       >
+                        <option value="Pending Payment Verification">Pending Payment Verification</option>
                         <option value="Received">Received</option>
                         <option value="Payment Verified">Payment Verified</option>
                         <option value="Preparing">Preparing</option>

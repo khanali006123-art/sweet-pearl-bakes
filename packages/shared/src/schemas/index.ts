@@ -22,8 +22,17 @@ export const OrderItemSchema = z.object({
 });
 
 export const OrderPaymentSchema = z.object({
-  method: z.enum(['Easypaisa', 'JazzCash']),
-  proofUrl: z.string().optional(),
+  method: z.enum(['Easypaisa', 'JazzCash'], {
+    errorMap: () => ({
+      message: 'Please select a payment method and pay the required advance payment before confirming your order.',
+    }),
+  }),
+  proofUrl: z
+    .string({
+      required_error: 'Please upload your advance payment receipt before confirming your order.',
+      invalid_type_error: 'Please upload your advance payment receipt before confirming your order.',
+    })
+    .min(1, 'Please upload your advance payment receipt before confirming your order.'),
   status: z.enum(['Pending', 'Verified', 'Rejected']).default('Pending'),
   referenceNumber: z.string().optional(),
 });
@@ -35,8 +44,17 @@ export const OrderCreateSchema = z.object({
   deliveryDate: z.string().min(10, 'Delivery date is required'),
   instructions: z.string().max(500, 'Instructions max 500 characters').optional(),
   designImageUrl: z.string().optional(),
-  paymentMethod: z.enum(['Easypaisa', 'JazzCash']),
-  paymentProofUrl: z.string().optional(),
+  paymentMethod: z.enum(['Easypaisa', 'JazzCash'], {
+    errorMap: () => ({
+      message: 'Please select a payment method and pay the required advance payment before confirming your order.',
+    }),
+  }),
+  paymentProofUrl: z
+    .string({
+      required_error: 'Please upload your advance payment receipt before confirming your order.',
+      invalid_type_error: 'Please upload your advance payment receipt before confirming your order.',
+    })
+    .min(1, 'Please upload your advance payment receipt before confirming your order.'),
   source: z.enum(['web', 'whatsapp']).default('web'),
 });
 

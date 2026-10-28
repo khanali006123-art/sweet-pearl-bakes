@@ -23,6 +23,7 @@ export type CakeFlavor =
 export type PriceMode = 'fixed' | 'from' | 'quote';
 
 export type OrderStatus =
+  | 'Pending Payment Verification'
   | 'Received'
   | 'Payment Verified'
   | 'Preparing'

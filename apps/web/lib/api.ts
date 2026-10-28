@@ -71,75 +71,33 @@ export async function fetchSettings(): Promise<ISettings> {
 }
 
 export async function submitOrder(orderData: any) {
-  try {
-    const res = await fetch(`${API_BASE}/orders`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(orderData),
-    });
-
-    const contentType = res.headers.get('content-type') || '';
-    if (contentType.includes('application/json')) {
-      const json = await res.json();
-      if (!res.ok) {
-        throw new Error(json.message || 'Failed to submit order');
-      }
-      return json;
-    }
-
-    // Response is not JSON (e.g. 404/502 HTML error page from proxy)
-    const text = await res.text();
-    console.warn('API returned non-JSON response:', text.slice(0, 100));
-  } catch (err: any) {
-    console.warn('API call failed, proceeding with client-side order confirmation fallback:', err);
+  // Validate required advance payment information
+  if (!orderData.paymentMethod || !['Easypaisa', 'JazzCash'].includes(orderData.paymentMethod)) {
+    throw new Error('Please select a payment method and pay the required advance payment before confirming your order.');
   }
 
-  // Graceful client fallback: ensures customer always receives confirmation and WhatsApp message
-  const items = orderData.items || [];
-  const itemsTotal = items.reduce(
-    (acc: number, item: any) => acc + (Number(item.unitPricePKR || 0) * Number(item.quantity || 1)),
-    0
-  );
-  const orderNumber = `SPB-${Math.floor(1000 + Math.random() * 9000)}`;
-  const itemsSummary = items
-    .map((i: any) => `${i.quantity}x ${i.productName} (${i.sizeLabel || ''}, ${i.flavor || ''})`)
-    .join(', ');
-
-  const waText = encodeURIComponent(
-    `Assalam-o-Alaikum Sweet Pearl Bakes! I just placed Order #${orderNumber}.\n\nItems: ${itemsSummary}\nDelivery Date: ${orderData.deliveryDate || ''}\nName: ${orderData.customer?.name || ''}\nTotal: Rs. ${itemsTotal.toLocaleString()}\nPayment via: ${orderData.paymentMethod || 'Easypaisa'}`
-  );
-  const whatsappUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${waText}`;
-
-  if (typeof window !== 'undefined') {
-    try {
-      const stored = JSON.parse(localStorage.getItem('spb_orders') || '[]');
-      stored.unshift({
-        orderNumber,
-        customer: orderData.customer,
-        deliveryAddress: orderData.deliveryAddress,
-        items: orderData.items,
-        deliveryDate: orderData.deliveryDate,
-        totalPKR: itemsTotal,
-        status: 'Received',
-        createdAt: new Date().toISOString(),
-      });
-      localStorage.setItem('spb_orders', JSON.stringify(stored));
-    } catch (e) {
-      // ignore
-    }
+  if (!orderData.paymentProofUrl || typeof orderData.paymentProofUrl !== 'string' || !orderData.paymentProofUrl.trim()) {
+    throw new Error('Please upload your advance payment receipt before confirming your order.');
   }
 
-  return {
-    success: true,
-    message: 'Order placed successfully',
-    data: {
-      orderNumber,
-      totalPKR: itemsTotal,
-      deliveryDate: orderData.deliveryDate,
-      status: 'Received',
-      whatsappUrl,
-    },
-  };
+  const res = await fetch(`${API_BASE}/orders`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(orderData),
+  });
+
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.message || 'Failed to submit order');
+    }
+    return json;
+  }
+
+  const text = await res.text();
+  console.warn('API returned non-JSON response:', text.slice(0, 100));
+  throw new Error('API server returned an unexpected response. Please try again.');
 }
 
 export async function trackOrderApi(orderNumber: string, phone: string) {

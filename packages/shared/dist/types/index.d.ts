@@ -1,7 +1,7 @@
 export type ProductCategory = 'Bakery Item' | 'Bread / Loaf' | 'Designer Cake' | 'Kids Theme' | 'Theme Cake' | 'Custom Cake' | 'Drip Cake' | 'Standard Cream' | 'Fudge / Premium' | 'Cream Cake' | 'Premium Cake' | 'Crunch Cake' | string;
 export type CakeFlavor = 'Chocolate' | 'Vanilla' | 'Red Velvet' | 'Black Forest' | 'Strawberry';
 export type PriceMode = 'fixed' | 'from' | 'quote';
-export type OrderStatus = 'Received' | 'Payment Verified' | 'Preparing' | 'Ready' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
+export type OrderStatus = 'Pending Payment Verification' | 'Received' | 'Payment Verified' | 'Preparing' | 'Ready' | 'Out for Delivery' | 'Delivered' | 'Cancelled';
 export type PaymentMethod = 'Easypaisa' | 'JazzCash';
 export type PaymentStatus = 'Pending' | 'Verified' | 'Rejected';
 export interface PriceOption {

@@ -50,7 +50,7 @@ export async function adminGetStats(req: AuthRequest, res: Response, next: NextF
     const subscribers = localStore.getData().subscribers;
 
     const totalOrders = orders.length;
-    const pendingOrders = orders.filter(o => o.status === 'Received' || o.payment.status === 'Pending').length;
+    const pendingOrders = orders.filter(o => o.status === 'Pending Payment Verification' || o.status === 'Received' || o.payment.status === 'Pending').length;
     const activeOrders = orders.filter(o => !['Delivered', 'Cancelled'].includes(o.status)).length;
     const completedOrders = orders.filter(o => o.status === 'Delivered').length;
 
