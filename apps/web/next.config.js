@@ -3,6 +3,12 @@
 const nextConfig = {
   reactStrictMode: true,
 
+  // tesseract.js must run from node_modules at runtime: bundling it breaks
+  // its OCR worker script path resolution inside route handlers.
+  experimental: {
+    serverComponentsExternalPackages: ['tesseract.js'],
+  },
+
   typescript: {
     ignoreBuildErrors: true,
   },
