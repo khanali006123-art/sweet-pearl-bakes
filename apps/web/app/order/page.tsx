@@ -178,13 +178,13 @@ function OrderContent() {
 
           <div className="space-y-2">
             <span className="inline-block px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider bg-amber-100 text-amber-900 border border-amber-300">
-              Order Placed — Pending Payment Verification
+              Order Request Received — Payment Verification Pending
             </span>
             <h1 className="font-serif text-3xl sm:text-4xl font-bold text-[#3A2117]">
-              Shukriya! Your Order is Received.
+              Shukriya! Your Request is Received.
             </h1>
             <p className="text-sm text-[#75645A] max-w-lg mx-auto">
-              We have received your cake details and advance payment receipt. Our bakery team will verify the payment screenshot shortly before baking starts.
+              We have received your cake details and advance payment receipt. Your order is NOT confirmed yet — our bakery team will verify the payment receipt first, and baking starts only after verification.
             </p>
           </div>
 
@@ -230,7 +230,7 @@ function OrderContent() {
                 className="w-full bg-[#148447] hover:bg-[#116e3a] text-white font-bold py-3.5 px-6 rounded-full text-xs shadow-md transition-colors flex items-center justify-center gap-2"
               >
                 <MessageCircle className="w-4 h-4" />
-                <span>Confirm on WhatsApp</span>
+                <span>Send Order Details on WhatsApp</span>
               </a>
             )}
 
