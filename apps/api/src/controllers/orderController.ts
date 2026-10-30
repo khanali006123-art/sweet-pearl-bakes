@@ -1,6 +1,12 @@
 import { Request, Response, NextFunction } from 'express';
 import { localStore } from '../config/store';
 import { OrderCreateSchema, OrderTrackSchema, IOrder, OrderStatus } from '@sweetpearl/shared';
+import {
+  checkReceiptText,
+  isReceiptImageDataUrl,
+  type ReceiptPaymentMethod,
+} from '@sweetpearl/shared';
+import { extractReceiptText } from '../utils/receiptOcr';
 import { AuthRequest } from '../middleware/authMiddleware';
 
 export async function createOrder(req: Request, res: Response, next: NextFunction) {
@@ -10,6 +16,42 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
     // Calculate total
     const itemsTotal = validated.items.reduce((acc, item) => acc + (item.unitPricePKR * item.quantity), 0);
     const totalPKR = itemsTotal; // delivery fee is quoted separately by owner
+
+    // Receipt authenticity (mirrors the Next.js route handler): the upload
+    // must be a real image AND must look like a genuine receipt for THIS
+    // order — our account number, the exact order amount, and a transaction
+    // confirmation. A random photo fails here, so it can never confirm an
+    // order. Any OCR failure is a rejection, never a pass.
+    if (!isReceiptImageDataUrl(validated.paymentProofUrl)) {
+      res.status(400).json({
+        success: false,
+        message: 'Please upload a valid payment receipt image (screenshot) before confirming your order.',
+      });
+      return;
+    }
+    let receiptText: string;
+    try {
+      receiptText = await extractReceiptText(validated.paymentProofUrl);
+    } catch (ocrErr) {
+      res.status(400).json({
+        success: false,
+        message:
+          'We could not read your receipt. Please upload a clear, complete screenshot of your original payment receipt and try again.',
+      });
+      return;
+    }
+    const receiptCheck = checkReceiptText({
+      text: receiptText,
+      paymentMethod: validated.paymentMethod as ReceiptPaymentMethod,
+      expectedAmountPKR: totalPKR,
+    });
+    if (!receiptCheck.ok) {
+      res.status(400).json({
+        success: false,
+        message: receiptCheck.message,
+      });
+      return;
+    }
 
     const orderNumber = localStore.getNextOrderNumber();
 
@@ -59,7 +101,7 @@ export async function createOrder(req: Request, res: Response, next: NextFunctio
 
     res.status(201).json({
       success: true,
-      message: 'Order created successfully. Advance payment receipt submitted for verification.',
+      message: 'Order request received. Advance payment receipt submitted for verification — your order will be confirmed only after the receipt is verified.',
       data: {
         orderNumber: newOrder.orderNumber,
         totalPKR: newOrder.totalPKR,
