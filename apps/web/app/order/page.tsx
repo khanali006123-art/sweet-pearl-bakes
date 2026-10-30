@@ -141,6 +141,12 @@ function OrderContent() {
       const res = await submitOrder(orderPayload);
       if (res && res.data) {
         setCompletedOrder(res.data);
+        // Auto-open WhatsApp with the pre-filled order message so the
+        // customer only has to press Send. The button below stays as a
+        // fallback in case the browser blocks the automatic popup.
+        if (res.data.whatsappUrl) {
+          window.open(res.data.whatsappUrl, '_blank', 'noopener,noreferrer');
+        }
       } else {
         throw new Error('Unable to complete order. Please contact us on WhatsApp.');
       }
@@ -241,6 +247,10 @@ function OrderContent() {
               Track Order Live
             </Link>
           </div>
+
+          <p className="text-[11px] text-[#75645A] max-w-md mx-auto -mt-2">
+            If WhatsApp did not open automatically, please tap the green button above.
+          </p>
         </div>
       ) : (
         /* Order Form */
